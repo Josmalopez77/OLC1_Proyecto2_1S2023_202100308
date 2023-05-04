@@ -52,6 +52,7 @@
 "toString"				return 'TK_TOSTRING'
 "toCharArray"			return 'TK_TOCHARARRAY'
 "run"					return 'TK_RUN'
+"main"					return 'TK_MAIN'
 //==========================================================
 "true"                	return 'TRUE'
 "false"               	return 'FALSE'
@@ -148,24 +149,29 @@ ENTRADA: ENTRADA ENTCERO { if($2!=="") $1.push($2); $$=$1; }
 
 ENTCERO: FUNCIONBODY {$$=$1}
 		| METODOBODY {$$=$1}
-		| RUNBODY {$$=$1}
+		| MAINBODY {$$=$1}
 		| DEC_VAR {$$=$1}
 		| DEC_VECT {$$=$1}
 ;
 
-FUNCIONBODY: IDENTIFICADOR PARENTESIS_ABRE PARENTESIS_CIERRA  DOSPUNTS TIPO LlaveAbre INSTRUCCION LlaveCierra { $$ = INSTRUCCION.nuevaFuncion($1, null, $7, $5, this._$.first_line, this._$.first_column+1) }
-			|  IDENTIFICADOR PARENTESIS_ABRE PARENTESIS_CIERRA DOSPUNTS TIPO LlaveAbre LlaveCierra { $$ = INSTRUCCION.nuevaFuncion($1, null, [], $5, this._$.first_line, this._$.first_column+1) }
-			|  IDENTIFICADOR PARENTESIS_ABRE LISTAPARAMETROS PARENTESIS_CIERRA DOSPUNTS TIPO LlaveAbre INSTRUCCION LlaveCierra { $$ = INSTRUCCION.nuevaFuncion($1, $3, $8, $6, this._$.first_line, this._$.first_column+1) }
-			|  IDENTIFICADOR PARENTESIS_ABRE LISTAPARAMETROS PARENTESIS_CIERRA DOSPUNTS TIPO LlaveAbre LlaveCierra { $$ = INSTRUCCION.nuevaFuncion($1, $3, [], $6, this._$.first_line, this._$.first_column+1) }
+FUCTIONBODY: TIPO IDENTIFICADOR PARENTESIS_ABRE PARENTESIS_CIERRA LlaveAbre INSTRUCCION LlaveCierra { $$ = INSTRUCCION.nuevaFuncion($2, null, $6, $1, this._$.first_line, this._$.first_column+1) }
+			| TIPO IDENTIFICADOR PARENTESIS_ABRE PARENTESIS_CIERRA LlaveAbre LlaveCierra { $$ = INSTRUCCION.nuevaFuncion($2, null, [], $1, this._$.first_line, this._$.first_column+1) }
+			| TIPO IDENTIFICADOR PARENTESIS_ABRE LISTAPARAMETROS PARENTESIS_CIERRA LlaveAbre INSTRUCCION LlaveCierra { $$ = INSTRUCCION.nuevaFuncion($2, $4, $7, $1, this._$.first_line, this._$.first_column+1) } 
+			| TIPO IDENTIFICADOR PARENTESIS_ABRE LISTAPARAMETROS PARENTESIS_CIERRA LlaveAbre LlaveCierra { $$ = INSTRUCCION.nuevaFuncion($2, $4, [], $1, this._$.first_line, this._$.first_column+1) }
 ;
 
-METODOBODY:  IDENTIFICADOR PARENTESIS_ABRE PARENTESIS_CIERRA DOSPUNTS TK_VOID LlaveAbre INSTRUCCION LlaveCierra { $$ = INSTRUCCION.nuevoMetodo($1, [], $7, this._$.first_line, this._$.first_column+1) }
-			|  IDENTIFICADOR PARENTESIS_ABRE PARENTESIS_CIERRA DOSPUNTS TK_VOID LlaveAbre LlaveCierra { $$ = INSTRUCCION.nuevoMetodo($1, [], [], this._$.first_line, this._$.first_column+1) }
-			|  IDENTIFICADOR PARENTESIS_ABRE LISTAPARAMETROS PARENTESIS_CIERRA DOSPUNTS TK_VOID LlaveAbre INSTRUCCION LlaveCierra { $$ = INSTRUCCION.nuevoMetodo($1, $3, $8, this._$.first_line, this._$.first_column+1) }
-			|  IDENTIFICADOR PARENTESIS_ABRE LISTAPARAMETROS PARENTESIS_CIERRA DOSPUNTS TK_VOID LlaveAbre LlaveCierra { $$ = INSTRUCCION.nuevoMetodo($1, $3, [], this._$.first_line, this._$.first_column+1) }
-			|  IDENTIFICADOR error LlaveCierra { $$ = ""; errors.push({ tipo: "Sintáctico", error: "Declaración de método/Función no válida.", linea: this._$.first_line, columna: this._$.first_column+1 }); }
+
+METODOBODY: TK_VOID IDENTIFICADOR PARENTESIS_ABRE PARENTESIS_CIERRA LlaveAbre INSTRUCCION LlaveCierra { $$ = INSTRUCCION.nuevoMetodo($2, [], $6, this._$.first_line, this._$.first_column+1) }	
+			| TK_VOID IDENTIFICADOR PARENTESIS_ABRE PARENTESIS_CIERRA LlaveAbre LlaveCierra { $$ = INSTRUCCION.nuevoMetodo($2, [], [], this._$.first_line, this._$.first_column+1) }
+			| TK_VOID IDENTIFICADOR PARENTESIS_ABRE LISTAPARAMETROS PARENTESIS_CIERRA LlaveAbre INSTRUCCION LlaveCierra { $$ = INSTRUCCION.nuevoMetodo($2, $4, $7, this._$.first_line, this._$.first_column+1) }
+			| TK_VOID IDENTIFICADOR PARENTESIS_ABRE LISTAPARAMETROS PARENTESIS_CIERRA LlaveAbre LlaveCierra { $$ = INSTRUCCION.nuevoMetodo($2, $4, [], this._$.first_line, this._$.first_column+1) }
+			| TK_VOID error LlaveCierra { $$ = ""; errors.push({ tipo: "Sintáctico", error: "Declaración de método/Función no válida.", linea: this._$.first_line, columna: this._$.first_column+1 }); }
 ;
 
+MAINBODY: TK_MAIN IDENTIFICADOR PARENTESIS_ABRE PARENTESIS_CIERRA TK_PYC {$$ = INSTRUCCION.nuevoRun($2, null, this._$.first_line, this._$.first_column+1)}
+			| TK_MAIN IDENTIFICADOR PARENTESIS_ABRE LISTAVALORES PARENTESIS_CIERRA TK_PYC {$$ = INSTRUCCION.nuevoRun($2, $4, this._$.first_line, this._$.first_column+1)}
+			| TK_MAIN error TK_PYC { $$ = ""; errors.push({ tipo: "Sintáctico", error: "Llamada de Run no válida.", linea: this._$.first_line, columna: this._$.first_column+1 }); } 
+;
 RUNBODY: TK_RUN  IDENTIFICADOR PARENTESIS_ABRE PARENTESIS_CIERRA TK_PYC {$$ = INSTRUCCION.nuevoRun($2, null, this._$.first_line, this._$.first_column+1)}
 			| TK_RUN  IDENTIFICADOR PARENTESIS_ABRE LISTAVALORES PARENTESIS_CIERRA TK_PYC {$$ = INSTRUCCION.nuevoRun($2, $4, this._$.first_line, this._$.first_column+1)}
 			| TK_RUN  error TK_PYC { $$ = ""; errors.push({ tipo: "Sintáctico", error: "Llamada de Run no válida.", linea: this._$.first_line, columna: this._$.first_column+1 }); }
@@ -302,11 +308,11 @@ DEC_VAR: TIPO IDENTIFICADOR IGUAL EXPRESION TK_PYC {$$ = INSTRUCCION.nuevaDeclar
 		| TIPO error TK_PYC { $$ = ""; errors.push({ tipo: "Sintáctico", error: "Declaración de variable no válida.", linea: this._$.first_line, columna: this._$.first_column+1 }); }
 ;
 
-DEC_VECT: TIPO IDENTIFICADOR COR_ABRE COR_CIERRA IGUAL NEW TIPO COR_ABRE EXPRESION COR_CIERRA TK_PYC { $$ = INSTRUCCION.nuevoVector($1, $7, $2, $9, null, null, this._$.first_line, this._$.first_column+1) }
-		| TIPO IDENTIFICADOR COR_ABRE COR_CIERRA IGUAL COR_ABRE LISTAVALORES COR_CIERRA TK_PYC { $$ = INSTRUCCION.nuevoVector($1, null, $2, null, $7, null, this._$.first_line, this._$.first_column+1) }
-		| IDENTIFICADOR COR_ABRE EXPRESION COR_CIERRA IGUAL EXPRESION TK_PYC { $$ = INSTRUCCION.modificacionVector($1, $3, $6, this._$.first_line, this._$.first_column+1) }
-		| TIPO IDENTIFICADOR COR_ABRE COR_CIERRA IGUAL EXPRESION TK_PYC { $$ = INSTRUCCION.nuevoVector($1, null, $2, null, null, $6, this._$.first_line, this._$.first_column+1) }
-		| TIPO COR_ABRE COR_CIERRA error TK_PYC { $$ = ""; errors.push({ tipo: "Sintáctico", error: "Declaración de vector no válida.", linea: this._$.first_line, columna: this._$.first_column+1 }); }
+DEC_VECT: TIPO COR_ABRE COR_CIERRA IDENTIFICADOR IGUAL NEW TIPO COR_ABRE EXPRESION COR_CIERRA TK_PYC { $$ = INSTRUCCION.nuevoVector($1, $7, $4, $9, null, null, this._$.first_line, this._$.first_column+1) }
+		| TIPO COR_ABRE COR_CIERRA IDENTIFICADOR IGUAL COR_ABRE LISTAVALORES COR_CIERRA TK_PYC { $$ = INSTRUCCION.nuevoVector($1, null, $4, null, $7, null, this._$.first_line, this._$.first_column+1) }
+		| IDENTIFICADOR COR_ABRE EXPRESION COR_CIERRA IGUAL EXPRESION { $$ = INSTRUCCION.modificacionVector($1, $3, $6, this._$.first_line, this._$.first_column+1) }
+		| TIPO COR_ABRE COR_CIERRA IDENTIFICADOR IGUAL EXPRESION TK_PYC { $$ = INSTRUCCION.nuevoVector($4, null, $1, null, null, $6, this._$.first_line, this._$.first_column+1) }
+		| TIPO COR_ABRE COR_CIERRA error TK_PYC { $$ = ""; errors.push({ tipo: "Sintáctico", error: "Declaración de vector no válida.", linea: this._$.first_line, columna: this._$.first_column+1 }); } 
 ;
 
 TIPO: TIPODATO {$$ = $1}
